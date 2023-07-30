@@ -36,35 +36,102 @@ const Article = mongoose.model("Article", articleSchema);
 app.get("/", (req, res) => {
   res.send("Hello World");
 });
-app.get("/articles", (req, res) => {
-  Article.find({}).then((foundArticles) => {
-    res.send(foundArticles);
+////////////// Request Targetting All Articles ///////////////////////
+app
+  .route("/articles")
+  // app.get("/articles"); // Start the server and listen on the specified port
+  .get((req, res) => {
+    Article.find({}).then((foundArticles) => {
+      res.send(foundArticles);
+    });
+  })
+  // app.post("/articles");
+  .post((req, res) => {
+    try {
+      const newArticle = new Article({
+        title: req.body.title,
+        content: req.body.content,
+      });
+      newArticle.save().then(() => {
+        res.setHeader("Content-Type", "application/json");
+        res.json({ message: "Successfully added a new article." });
+      });
+    } catch (err) {
+      res.json({ message: err });
+    }
+  })
+  // app.delete("/articles");
+  .delete((req, res) => {
+    try {
+      Article.deleteMany({}).then(() => {
+        res.setHeader("Content-Type", "application/json");
+        res.json({ message: "Successfully deleted all articles." });
+      });
+    } catch (err) {
+      res.json({ message: err });
+    }
   });
-}); // Start the server and listen on the specified port
-app.post("/articles", (req, res) => {
-  try {
-    const newArticle = new Article({
-      title: req.body.title,
-      content: req.body.content,
-    });
-    newArticle.save().then(() => {
-      res.setHeader("Content-Type", "application/json");
-      res.json({ message: "Successfully added a new article." });
-    });
-  } catch (err) {
-    res.json({ message: err });
-  }
-});
-app.delete("/articles", (req, res) => {
-  try {
-    Article.deleteMany({}).then(() => {
-      res.setHeader("Content-Type", "application/json");
-      res.json({ message: "Successfully deleted all articles." });
-    });
-  } catch (err) {
-    res.json({ message: err });
-  }
-});
+////////////// Request Targetting A Specific Article ///////////////////////
+app
+  .route("/articles/:articleTitle")
+  // app.get("/articles/:articleTitle");
+  .get((req, res) => {
+    try {
+      Article.findOne({ title: req.params.articleTitle }).then(
+        (foundArticle) => {
+          if (foundArticle) {
+            res.setHeader("Content-Type", "application/json");
+            res.json(foundArticle);
+          } else {
+            res.setHeader("Content-Type", "application/json");
+            res.json({ message: "No article matching that title was found." });
+          }
+        }
+      );
+    } catch (err) {
+      res.json({ message: err });
+    }
+  })
+  // app.put("/articles/:articleTitle");
+  .put((req, res) => {
+    try {
+      Article.update(
+        { title: req.params.articleTitle },
+        { title: req.body.title, content: req.body.content },
+        { overwrite: true }
+      ).then(() => {
+        res.setHeader("Content-Type", "application/json");
+        res.json({ message: "Successfully updated article." });
+      });
+    } catch (err) {
+      res.json({ message: err });
+    }
+  })
+  // app.patch("/articles/:articleTitle");
+  .patch((req, res) => {
+    try {
+      Article.update(
+        { title: req.params.articleTitle },
+        { $set: req.body }
+      ).then(() => {
+        res.setHeader("Content-Type", "application/json");
+        res.json({ message: "Successfully updated article." });
+      });
+    } catch (err) {
+      res.json({ message: err });
+    }
+  })
+  // app.delete("/articles/:articleTitle");
+  .delete((req, res) => {
+    try {
+      Article.deleteOne({ title: req.params.articleTitle }).then(() => {
+        res.setHeader("Content-Type", "application/json");
+        res.json({ message: "Successfully deleted article." });
+      });
+    } catch (err) {
+      res.json({ message: err });
+    }
+  });
 app.listen(PORT, () => {
   console.log(` app listening at http://localhost:${PORT}`);
 });
